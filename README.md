@@ -73,7 +73,7 @@ pip install -e ".[dev]"
 python -m qrmenu_desktop
 ```
 
-Giriş ekranında sunucu adresini (ör. QR Menü'nün canlı demosu) ve web panelindeki hesabınızı girin. Demo hesabı: `demo` / `demo-sifre-2026`.
+Giriş ekranında sunucu adresi varsayılan olarak canlı demodur (`https://qr-menus.onrender.com`). Demo hesabı: `demo` / `demo-sifre-2026`. Uygulamayı açıkken [Masa 4'ün menüsünden](https://qr-menus.onrender.com/m/cinaralti-lokantasi?masa=demo-klasik-4) garson çağırırsanız çağrı birkaç saniye içinde ekrana düşer.
 
 Yerel geliştirme için [qr_menus](https://github.com/melisayalcinkaya/qr_menus) backend'ini çalıştırıp sunucu adresine `http://127.0.0.1:8000` yazabilirsiniz.
 
