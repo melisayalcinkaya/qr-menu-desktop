@@ -5,6 +5,13 @@ on:
     branches: [main]
     tags: ["v*"]
   pull_request:
+  # Actions sekmesinden "Run workflow" ile sürüm yayımlamak için (ör. v2.1.0)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Yayımlanacak sürüm etiketi (ör. v2.1.0). Boş bırakılırsa yalnızca derlenir."
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -66,7 +73,7 @@ jobs:
 
   release:
     name: GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(inputs.version, 'v')
     needs: build-windows
     runs-on: ubuntu-latest
     permissions:
@@ -77,5 +84,9 @@ jobs:
           name: QRMenuCagriEkrani-windows
       - uses: softprops/action-gh-release@v3
         with:
+          # Etiket yoksa bu commit üzerinde oluşturulur
+          tag_name: ${{ inputs.version || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ inputs.version || github.ref_name }}
           files: QRMenuCagriEkrani.exe
           generate_release_notes: true
