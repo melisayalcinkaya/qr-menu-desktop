@@ -86,6 +86,10 @@ def stylesheet(c: dict | None = None) -> str:
     QFrame[role="call"] {{ background: {c["amber_soft"]}; border: 2px solid {c["amber"]};
         border-radius: 16px; }}
     QFrame[role="call"][fresh="true"] {{ border: 4px solid {c["amber"]}; }}
+    QFrame[role="call"][kind="bill"] {{ background: {c["primary_soft"]}; border-color: {c["primary"]}; }}
+    QFrame[role="call"][kind="bill"][fresh="true"] {{ border: 4px solid {c["primary"]}; }}
+    QLabel[role="kind"] {{ color: {c["amber"]}; font-size: 14px; font-weight: 800; }}
+    QFrame[role="call"][kind="bill"] QLabel[role="kind"] {{ color: {c["primary"]}; }}
     QLabel[role="table"] {{ font-size: 40px; font-weight: 800; }}
     QLabel[role="note"] {{ font-size: 18px; }}
     QLabel[role="age"] {{ color: {c["muted"]}; font-size: 15px; font-weight: 600; }}

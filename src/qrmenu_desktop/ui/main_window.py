@@ -159,8 +159,10 @@ class MainWindow(QMainWindow):
     # --- Bildirimler -------------------------------------------------------
 
     def announce(self, calls):
-        names = ", ".join(table_name(c["table_label"]) for c in calls)
-        text = f"{names} garson çağırıyor"
+        text = ", ".join(
+            f"{table_name(c['table_label'])} {'hesap istiyor' if c.get('kind') == 'bill' else 'garson çağırıyor'}"
+            for c in calls
+        )
         note = next((c["note"] for c in calls if c.get("note")), "")
         if self.settings.sound:
             sound.play_chime()

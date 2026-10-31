@@ -8,8 +8,14 @@ from qrmenu_desktop.ui.common import table_name, time_ago
 from qrmenu_desktop.ui.menu import MenuView, ProductDialog, format_price
 
 
-def call(i, label="5", note=""):
-    return {"id": i, "table_label": label, "note": note, "created_at": f"2026-10-30T12:0{i}:00+00:00"}
+def call(i, label="5", note="", kind="waiter"):
+    return {
+        "id": i,
+        "table_label": label,
+        "kind": kind,
+        "note": note,
+        "created_at": f"2026-10-30T12:0{i}:00+00:00",
+    }
 
 
 class FakeApi:
@@ -77,7 +83,23 @@ def test_first_load_is_not_announced_but_later_calls_are(qtbot, view):
     v.poll()
     qtbot.waitUntil(lambda: len(v.tiles) == 2)
     assert [c["id"] for c in announced[0]] == [2]
-    assert v.tiles[2].property("fresh") == "true"
+    assert v.tiles[(2, "waiter")].property("fresh") == "true"
+
+
+def test_bill_upgrade_is_announced_and_redrawn(qtbot, view):
+    v, api = view
+    api.pending = [call(1, "4")]
+    announced = []
+    v.new_calls.connect(announced.append)
+    v.set_business("cafe")
+    qtbot.waitUntil(lambda: len(v.tiles) == 1)
+    # Müşteri aynı masadan hesap istedi: sunucu aynı çağrıyı "bill" türüne yükseltir
+    api.pending = [call(1, "4", kind="bill")]
+    v.poll()
+    qtbot.waitUntil(lambda: (1, "bill") in v.tiles)
+    assert len(v.tiles) == 1
+    assert announced[0][0]["kind"] == "bill"
+    assert v.tiles[(1, "bill")].property("kind") == "bill"
 
 
 def test_closing_is_optimistic(qtbot, view):
@@ -90,7 +112,7 @@ def test_closing_is_optimistic(qtbot, view):
     assert sig.args == [1]
     qtbot.waitUntil(lambda: api.closed == [(1, "complete")])
     # Kapatma isteği sürerken gelen yoklama kartı geri getirmez
-    assert 1 not in v.tiles
+    assert (1, "waiter") not in v.tiles
 
 
 def test_failed_close_restores_the_tile(qtbot, view, monkeypatch):

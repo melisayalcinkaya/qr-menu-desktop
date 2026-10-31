@@ -18,6 +18,12 @@ from .common import button, error_text, label, show_error, table_name, time_ago
 from .style import repolish, set_role
 
 TILE_WIDTH = 280
+KIND_TEXT = {"waiter": "Garson çağırıyor", "bill": "Hesap istiyor"}
+
+
+def call_key(call):
+    """Kartın kimliği: çağrı hesaba yükseltilirse (aynı id) kart yeniden çizilsin."""
+    return (call["id"], call.get("kind", "waiter"))
 
 
 class CallTile(QFrame):
@@ -26,15 +32,18 @@ class CallTile(QFrame):
     def __init__(self, call: dict, fresh=False):
         super().__init__()
         self.call = call
-        set_role(self, "call", fresh="true" if fresh else "false")
+        bill = call.get("kind") == "bill"
+        set_role(self, "call", fresh="true" if fresh else "false", kind="bill" if bill else "waiter")
         self.setMinimumWidth(TILE_WIDTH - 20)
         name = table_name(call["table_label"])
-        self.setAccessibleName(f"{name} garson çağırıyor")
+        what = KIND_TEXT["bill" if bill else "waiter"]
+        self.setAccessibleName(f"{name} {what.lower()}")
 
         self.age = label("", "age")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 16, 18, 16)
         layout.setSpacing(6)
+        layout.addWidget(label(what, "kind"))
         layout.addWidget(label(name, "table"))
         layout.addWidget(self.age)
         if call.get("note"):
@@ -70,8 +79,8 @@ class CallsView(QWidget):
         self.api = api
         self.slug = None
         self.calls: list[dict] = []
-        self.known_ids: set | None = None  # ilk yüklemede "yeni" bildirimi yapılmaz
-        self.tiles: dict[int, CallTile] = {}
+        self.known: set | None = None  # (id, tür); ilk yüklemede "yeni" bildirimi yapılmaz
+        self.tiles: dict[tuple, CallTile] = {}
         self._busy = False
         self._closing: set[int] = set()
 
@@ -115,7 +124,7 @@ class CallsView(QWidget):
 
     def set_business(self, slug):
         self.slug = slug
-        self.known_ids = None
+        self.known = None
         self.calls = []
         self._render()
         self.poll()
@@ -143,11 +152,12 @@ class CallsView(QWidget):
         self.banner.hide()
         self.connection_changed.emit(True)
         calls = [c for c in calls if c["id"] not in self._closing]
-        ids = {c["id"] for c in calls}
-        fresh = [] if self.known_ids is None else [c for c in calls if c["id"] not in self.known_ids]
-        self.known_ids = ids
+        keys = {call_key(c) for c in calls}
+        # Yeni çağrılar ve garson çağrısından hesaba yükseltilenler bildirilir
+        fresh = [] if self.known is None else [c for c in calls if call_key(c) not in self.known]
+        self.known = keys
         self.calls = sorted(calls, key=lambda c: c["created_at"])  # en uzun bekleyen önce
-        self._render(fresh_ids={c["id"] for c in fresh})
+        self._render(fresh_keys={call_key(c) for c in fresh})
         if fresh:
             self.new_calls.emit(fresh)
 
@@ -166,16 +176,18 @@ class CallsView(QWidget):
 
     # --- Çizim -----------------------------------------------------------
 
-    def _render(self, fresh_ids=frozenset()):
-        for call_id in list(self.tiles):
-            if call_id not in {c["id"] for c in self.calls}:
-                self.tiles.pop(call_id).deleteLater()
+    def _render(self, fresh_keys=frozenset()):
+        current = {call_key(c) for c in self.calls}
+        for key in list(self.tiles):
+            if key not in current:
+                self.tiles.pop(key).deleteLater()
         for call in self.calls:
-            if call["id"] not in self.tiles:
-                tile = CallTile(call, fresh=call["id"] in fresh_ids)
+            key = call_key(call)
+            if key not in self.tiles:
+                tile = CallTile(call, fresh=key in fresh_keys)
                 tile.closed.connect(self.close_call)
-                self.tiles[call["id"]] = tile
-                if call["id"] in fresh_ids:
+                self.tiles[key] = tile
+                if key in fresh_keys:
                     QTimer.singleShot(6000, tile.settle)
         self._relayout()
         self.empty.setVisible(not self.calls)
@@ -187,7 +199,7 @@ class CallsView(QWidget):
             self.grid.takeAt(0)
         columns = max(1, self.width() // TILE_WIDTH)
         for index, call in enumerate(self.calls):
-            self.grid.addWidget(self.tiles[call["id"]], index // columns, index % columns)
+            self.grid.addWidget(self.tiles[call_key(call)], index // columns, index % columns)
         self.grid.setRowStretch(self.grid.rowCount(), 1)
         for col in range(columns):
             self.grid.setColumnStretch(col, 1)
