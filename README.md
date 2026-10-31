@@ -21,7 +21,7 @@ Web paneli de çağrıları gösterir. Ancak bir tarayıcı sekmesi kasada gün 
 
 ## Özellikler
 
-- **Garson çağrıları:** En uzun bekleyen başta; yeni gelen kart vurgulanır. Kapatma iyimser (kart hemen kalkar, hata olursa geri gelir). Başka bir ekrandan kapatılmış çağrı sessizce düşer. Bağlantı koparsa görünür uyarı verir ve kendiliğinden yeniden dener.
+- **Garson çağrıları ve hesap istekleri:** En uzun bekleyen başta; yeni gelen kart vurgulanır, hesap istekleri ayrı renkte ve "Hesap istiyor" etiketiyle görünür. Kapatma iyimser (kart hemen kalkar, hata olursa geri gelir). Başka bir ekrandan kapatılmış çağrı sessizce düşer. Bağlantı koparsa görünür uyarı verir ve kendiliğinden yeniden dener.
 - **Menü:** Kategoriye göre ürünler; "Menüde" kutusunu kaldırınca ürün müşteri menüsünden anında kalkar. Ad, fiyat, açıklama ve alerjen düzenleme.
 - **Masalar ve QR:** Masa ekleme, QR önizleme ve PNG kaydetme, sızan bir kodu geçersiz kılmak için yeni kod üretme, tüm masa kartlarını tek PDF olarak kaydetme.
 - **Yorumlar:** Onay bekleyenleri yayınlama, reddetme ve silme.
@@ -80,7 +80,7 @@ Yerel geliştirme için [qr_menus](https://github.com/melisayalcinkaya/qr_menus)
 ## Testler
 
 ```bash
-pytest -q          # 29 test: API istemcisi, oturum saklama, çağrı panosu, menü, giriş
+pytest -q          # 30 test: API istemcisi, oturum saklama, çağrı panosu, menü, giriş
 ruff check .
 ```
 
